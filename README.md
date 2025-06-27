@@ -21,6 +21,8 @@ First, install the required Python packages:
 pip install -r requirements.txt
 ```
 
+For the GUI, ensure Tkinter is installed. On some Linux distributions, you might need to install it via your system's package manager (e.g., `sudo apt-get install python3-tk` on Debian/Ubuntu).
+
 ## Usage
 
 ### CLI
