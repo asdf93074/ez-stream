@@ -36,3 +36,8 @@ python cli.py "magnet:?xt=urn:btih:..."
 ```bash
 python gui.py
 ```
+1. Enter the magnet link in the GUI. Set a save directory (optional).
+
+2. Press the button to have it fetch all the files in the torrent.
+
+3. Right click a file and press play to have it start bufferring. It will open VLC when its ready.
