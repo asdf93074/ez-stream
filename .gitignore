@@ -1,3 +1,4 @@
 *.parts
 __pycache__
 .opencode
+out/
