@@ -4,6 +4,7 @@ Command-line entry point for the torrent streamer.
 """
 import sys
 
+from downloader import TorrentDownloader
 from engine import TorrentEngine
 from player import VLCPlayer
 from ui import ConsoleUI, UI
@@ -16,8 +17,9 @@ def main() -> int:
     magnet, save_path = ui.get_parameters()
 
     engine = TorrentEngine(save_path)
+    downloader = TorrentDownloader(engine)
     player = VLCPlayer()
-    controller = TorrentStreamerController(engine, player, ui)
+    controller = TorrentStreamerController(engine, downloader, player, ui)
     controller.stream(magnet, save_path)
     return 0
 

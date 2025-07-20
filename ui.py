@@ -1,9 +1,11 @@
+
 """
 Console UI layer for the torrent streamer.
 """
 import argparse
 import time
 from abc import ABC, abstractmethod
+from typing import Union
 
 from model import TorrentFile, DownloadStats, sizeof_fmt
 
@@ -29,7 +31,7 @@ class UI(ABC):
         pass
 
     @abstractmethod
-    def prompt_file_choice(self, max_index: int) -> int:
+    def prompt_file_choice(self, max_index: int) -> Union[int, str]:
         pass
 
     @abstractmethod
@@ -77,14 +79,17 @@ class ConsoleUI(UI):
         for f in files:
             print(f"[{f.index}] {f.path} ({sizeof_fmt(f.size)})")
 
-    def prompt_file_choice(self, max_index: int) -> int:
+    def prompt_file_choice(self, max_index: int) -> Union[int, str]:
+        raw_choice = input('Select file by index or name fragment to stream: ')
         try:
-            choice = int(input('Select file index to stream: '))
+            # Try to interpret as an integer index first
+            choice = int(raw_choice)
+            if choice < 0 or choice > max_index:
+                raise IndexError('Index out of range')
+            return choice
         except ValueError:
-            raise ValueError('Invalid selection')
-        if choice < 0 or choice > max_index:
-            raise IndexError('Index out of range')
-        return choice
+            # If it's not a valid integer, treat it as a string name
+            return raw_choice
 
     def show_selected_file(self, index: int, rel_path: str, abs_path: str) -> None:
         print(f'Selected file [{index}]: {rel_path}')

@@ -1,10 +1,11 @@
 """
 Controller layer for the torrent streamer: ties engine, UI, and player together.
 """
-import os
 import time
+from typing import Union
 
-from model import TorrentMetadata, DownloadStats
+from model import DownloadStats
+from downloader import TorrentDownloader
 from engine import TorrentEngine
 from player import Player
 from ui import UI
@@ -16,10 +17,12 @@ class TorrentStreamerController:
     def __init__(
         self,
         engine: TorrentEngine,
+        downloader: TorrentDownloader,
         player: Player,
         ui: UI,
     ):
         self.engine = engine
+        self.downloader = downloader
         self.player = player
         self.ui = ui
 
@@ -27,37 +30,31 @@ class TorrentStreamerController:
         # add magnet and fetch metadata
         self.engine.add_magnet(magnet)
         self.ui.show_fetching_metadata()
-        metadata: TorrentMetadata = self.engine.fetch_metadata()
+        metadata = self.engine.fetch_metadata()
         self.ui.show_metadata(metadata.name)
 
         # list files and choose one
         self.ui.list_files(metadata.files)
-        choice = self.ui.prompt_file_choice(len(metadata.files) - 1)
+        choice: Union[int, str] = self.ui.prompt_file_choice(len(metadata.files) - 1)
 
-        # instruct engine to prioritize only that file
-        offset, file_size = self.engine.select_file(choice)
-        rel_path = metadata.files[choice].path
-        abs_path = os.path.abspath(os.path.join(save_path, rel_path))
-        self.ui.show_selected_file(choice, rel_path, abs_path)
-
-        # buffer header piece
-        first_piece = offset // metadata.piece_size
+        # download the file and get its path
         self.ui.buffering_header()
-        self.engine.wait_piece(first_piece)
+        abs_path, file_index, file_size = self.downloader.download_file(
+            metadata, choice, save_path
+        )
         self.ui.newline()
+        self.ui.show_selected_file(
+            file_index, metadata.files[file_index].path, abs_path
+        )
 
         # launch player
         self.ui.show_launching_player()
         proc = self.player.play(abs_path)
 
-        # queue remaining pieces sequentially for streaming
-        last_piece = (offset + file_size - 1) // metadata.piece_size
-        self.engine.schedule_pieces(first_piece + 1, last_piece)
-
         # monitor download progress until player exits
         try:
             while proc.poll() is None:
-                stats: DownloadStats = self.engine.get_progress(choice, file_size)
+                stats: DownloadStats = self.engine.get_progress(file_index, file_size)
                 self.ui.show_progress(stats)
                 time.sleep(1)
             self.ui.newline()

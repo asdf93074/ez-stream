@@ -7,6 +7,7 @@ from ui import UI
 from engine import TorrentEngine
 from player import VLCPlayer
 from controller import TorrentStreamerController
+from downloader import TorrentDownloader
 
 
 class GUIUI(UI):
@@ -70,8 +71,9 @@ class GUIUI(UI):
 
     def _run_controller(self):
         engine = TorrentEngine(self.save_path.get())
+        downloader = TorrentDownloader(engine)
         player = VLCPlayer()
-        controller = TorrentStreamerController(engine, player, self)
+        controller = TorrentStreamerController(engine, downloader, player, self)
         controller.stream(self.magnet.get(), self.save_path.get())
 
     def get_parameters(self) -> tuple[str, str]:
