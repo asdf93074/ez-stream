@@ -15,206 +15,195 @@
             --background-tertiary: #222222;
             --text-primary: #e0e0e0;
             --text-secondary: #a0a0a0;
-            --accent-primary: #ff8c00; /* Dark Orange */
+            --accent-primary: #ff8c00;
             --accent-secondary: #444444;
             --border-color: #333333;
+            --seed-color: #32cd32;
+            --leech-color: #ff4500;
             --font-primary: 'Teko', sans-serif;
             --font-secondary: 'Roboto Mono', monospace;
         }
 
         /* --- GENERAL RESET & SETUP --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background-color: var(--background-primary);
-            color: var(--text-primary);
-            font-family: var(--font-primary);
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
+        html { height: 100%; overflow: hidden; }
+        body { background-color: var(--background-primary); color: var(--text-primary); font-family: var(--font-primary); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
         /* --- HEADER & NAVIGATION --- */
-        .main-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-            background-color: var(--background-primary);
-            border-bottom: 1px solid var(--border-color);
-            flex-wrap: wrap;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
+        .main-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background-color: var(--background-primary); border-bottom: 1px solid var(--border-color); flex-wrap: wrap; }
         .logo { font-family: var(--font-primary); font-size: 2.5rem; font-weight: 600; color: var(--accent-primary); letter-spacing: 2px; text-shadow: 0 0 5px var(--accent-primary); }
         .search-container { flex-grow: 1; display: flex; justify-content: center; padding: 0 2rem; }
         .search-box { width: 100%; max-width: 600px; background-color: var(--background-secondary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; color: var(--text-primary); font-family: var(--font-secondary); font-size: 1rem; transition: border-color 0.3s, box-shadow 0.3s; }
         .search-box:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 10px rgba(255, 140, 0, 0.5); }
         .header-status { font-family: var(--font-secondary); font-size: 0.8rem; color: var(--text-secondary); text-align: right; }
 
-        /* --- MAIN CONTENT AREA --- */
-        .main-content { flex: 1; padding: 2rem; }
-        #content-wrapper { display: block; }
+        /* --- MAIN CONTENT & LAYOUT --- */
+        .main-content { flex-grow: 1; padding: 2rem; display: flex; flex-direction: column; overflow: hidden; }
+        #content-wrapper { display: block; overflow-y: auto; }
         .content-title { font-size: 2rem; font-weight: 600; margin-bottom: 1.5rem; color: var(--text-primary); border-left: 4px solid var(--accent-primary); padding-left: 1rem; }
         #results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.5rem; }
-        
-        .content-card {
-            background-color: var(--background-secondary);
-            border: 1px solid var(--border-color);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.3s, box-shadow 0.3s;
-            cursor: pointer;
-        }
+        .content-card { background-color: var(--background-secondary); border: 1px solid var(--border-color); overflow: hidden; display: flex; flex-direction: column; transition: transform 0.3s, box-shadow 0.3s; cursor: pointer; }
         .content-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4); border-color: var(--accent-secondary); }
         .card-image { width: 100%; height: 330px; object-fit: cover; background-color: var(--background-tertiary); }
         .card-body { padding: 1rem; display: flex; flex-direction: column; flex-grow: 1; }
         .card-title { font-family: var(--font-primary); font-size: 1.5rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; line-height: 1.1; }
         .card-meta { font-family: var(--font-secondary); font-size: 0.8rem; color: var(--text-secondary); margin-bottom: auto; }
-        .card-meta span { margin-right: 10px; }
-        
         .message-area { font-family: var(--font-secondary); color: var(--text-secondary); font-size: 1.2rem; text-align: center; width: 100%; padding: 4rem 0; display: none; }
         
-        /* --- DETAILS VIEW --- */
-        #details-view-container { display: none; /* Hidden by default */ }
-        .details-view { display: flex; gap: 2.5rem; flex-wrap: wrap; }
-        .details-poster { flex: 1 1 300px; }
-        .details-poster img { width: 100%; max-width: 400px; border: 1px solid var(--border-color); }
-        .details-info { flex: 2 1 500px; }
+        /* --- DETAILS VIEW (3-COLUMN LAYOUT) --- */
+        #details-view-container { display: none; flex-grow: 1; overflow: hidden; }
+        .details-view { display: flex; gap: 2rem; height: 100%; }
+        .details-poster { flex: 0 0 300px; }
+        .details-poster img { width: 100%; border: 1px solid var(--border-color); }
+        .details-info { flex: 1 1 45%; overflow-y: auto; padding-right: 1.5rem; }
         .back-button { background: none; border: 1px solid var(--accent-secondary); color: var(--text-secondary); padding: 0.5rem 1rem; font-family: var(--font-secondary); cursor: pointer; transition: all 0.2s; margin-bottom: 1.5rem; }
         .back-button:hover { color: var(--text-primary); border-color: var(--accent-primary); }
         .details-title { font-size: 3.5rem; font-weight: 600; margin-bottom: 0.5rem; line-height: 1; }
         .details-year { font-size: 1.5rem; font-family: var(--font-secondary); color: var(--text-secondary); margin-bottom: 1.5rem; }
         .details-plot { font-family: var(--font-secondary); font-size: 1rem; line-height: 1.6; margin-bottom: 2rem; max-width: 70ch; }
-        .details-meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; font-family: var(--font-secondary); font-size: 0.9rem; }
-        .meta-item strong { color: var(--accent-primary); display: block; font-size: 0.8rem; margin-bottom: 0.25rem; font-weight: 400;}
-        .stream-button { margin-top: 2rem; padding: 1rem 1.5rem; background-color: var(--accent-primary); color: var(--background-primary); text-align: center; text-decoration: none; font-family: var(--font-secondary); font-weight: 700; border: none; cursor: pointer; transition: background-color 0.3s, color 0.3s; font-size: 1.1rem; display: inline-block; }
-        .stream-button:hover { background-color: var(--text-primary); }
+        .details-meta-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; font-family: var(--font-secondary); font-size: 0.9rem; }
+        .meta-item strong { color: var(--accent-primary); display: block; font-size: 0.8rem; margin-bottom: 0.25rem; font-weight: 400; }
+        
+        /* --- TORRENTS & FILE LIST COLUMN --- */
+        .right-panel-container { flex: 1 1 55%; display: flex; flex-direction: column; border-left: 1px solid var(--border-color); padding-left: 2rem; }
+        .right-panel-container h3 { font-size: 2rem; border-left: 4px solid var(--accent-primary); padding-left: 1rem; margin-bottom: 1rem; flex-shrink: 0; }
+        .scrollable-content-wrapper { overflow-y: auto; flex-grow: 1; }
+        .torrents-table { width: 100%; border-collapse: collapse; font-family: var(--font-secondary); font-size: 0.9rem; }
+        .torrents-table th, .torrents-table td { padding: 0.8rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .torrents-table td:first-child { white-space: normal; }
+        .torrents-table th { color: var(--accent-primary); font-weight: 400; font-size: 0.8rem; position: sticky; top: 0; background-color: var(--background-primary); z-index: 1; }
+        .torrents-table td.col-seed { color: var(--seed-color); }
+        .torrents-table td.col-leech { color: var(--leech-color); }
+        .action-link { display: inline-block; text-decoration: none; color: var(--accent-primary); border: 1px solid var(--accent-secondary); padding: 0.3rem 0.6rem; transition: all 0.2s; cursor: pointer; margin-right: 0.5rem; }
+        .action-link:hover { background-color: var(--accent-primary); color: var(--background-primary); border-color: var(--accent-primary); }
 
+        /* --- FILE BROWSER --- */
+        .file-browser-header { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem; flex-shrink: 0; }
+        .file-filter-input { background-color: var(--background-secondary); border: 1px solid var(--border-color); padding: 0.5rem; width: 100%; color: var(--text-primary); font-family: var(--font-secondary); }
+        .file-list { list-style: none; font-family: var(--font-secondary); font-size: 0.9rem; }
+        .file-list li { padding: 0.6rem; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background-color 0.2s; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .file-list li:hover { background-color: var(--accent-secondary); }
+        .file-list li small { color: var(--text-secondary); margin-left: 0.5rem; }
+
+        /* --- SPINNER --- */
+        .spinner-container { display: flex; justify-content: center; align-items: center; padding: 4rem 0; flex-grow: 1; }
+        .spinner { width: 50px; height: 50px; border: 4px solid var(--accent-secondary); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <header class="main-header">
         <div class="logo">VORTEX</div>
-        <div class="search-container">
-            <input type="text" id="search-input" class="search-box" placeholder="Search for a show, movie, or content...">
-        </div>
-        <div class="header-status">
-            <div>SYSTEM STATUS: ONLINE</div>
-            <div id="last-updated">LAST UPDATE:</div>
-        </div>
+        <div class="search-container"><input type="text" id="search-input" class="search-box" placeholder="Search for a show, movie, or content..."></div>
+        <div class="header-status"><div>SYSTEM STATUS: ONLINE</div><div id="last-updated"></div></div>
     </header>
 
     <main class="main-content">
-        <div id="content-wrapper">
-            <h2 id="content-title" class="content-title"></h2>
-            <div id="results-grid"></div>
-        </div>
+        <div id="content-wrapper"><h2 id="content-title" class="content-title"></h2><div id="results-grid"></div></div>
         <div id="details-view-container"></div>
         <div id="message-area" class="message-area"></div>
     </main>
 
     <script>
-        // --- CONFIGURATION & STATE ---
         const baseURL = 'http://localhost:8000';
-        let lastDisplayedContent = [];
-        let lastContentTitle = 'TRENDING NOW';
+        let lastDisplayedContent = [], lastContentTitle = 'TRENDING NOW', lastDisplayedTorrents = [];
+        const metadataCache = new Map();
+        const TRACKER_LIST = [ 'udp://tracker.opentrackr.org:1337', 'udp://open.stealth.si:80/announce', 'udp://tracker.torrent.eu.org:451/announce', 'udp://tracker.bittor.pw:1337/announce', 'udp://public.popcorn-tracker.org:6969/announce', 'udp://tracker.dler.org:6969/announce', 'udp://exodus.desync.com:6969', 'udp://open.demonii.com:1337/announce' ];
+        const mockData = [ { id: 'tt0133093', title: 'The Matrix', year: '1999', type: 'Movie', poster: 'https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg' }, { id: 'tt2467372', title: 'Brooklyn Nine-Nine', year: '2013–2021', type: 'Series', poster: 'https://m.media-amazon.com/images/M/MV5BNzBiODQxZTUtNjc0MC00Yzc1LThmYTMtN2YwYTU3NjgxMmI4XkEyXkFqcGc@._V1_SX300.jpg'}, { id: 'tt0816692', title: 'Interstellar', year: '2014', type: 'Movie', poster: 'https://m.media-amazon.com/images/M/MV5BZjdkOTU3MDktN2IxOS00OGEyLWFmMjktY2FiMmZkNWIyODZiXkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_SX300.jpg' }, { id: 'tt0903747', title: 'Breaking Bad', year: '2008–2013', type: 'Series', poster: 'https://m.media-amazon.com/images/M/MV5BODkyNThlPjEtMDE3MC00MGI3LTgwZmEtZDIxNDk3OTQzMWNhXkEyXkFqcGdeQXVyMTkxNjUyNQ@@._V1_SX300.jpg' } ];
+        const searchInput = document.getElementById('search-input'), contentWrapper = document.getElementById('content-wrapper'), resultsGrid = document.getElementById('results-grid'), contentTitle = document.getElementById('content-title'), messageArea = document.getElementById('message-area'), detailsViewContainer = document.getElementById('details-view-container');
 
-        // --- MOCK DATA (For initial "Trending Now" view) ---
-        const mockData = [
-            { id: 'tt0133093', title: 'The Matrix', year: '1999', type: 'Movie', poster: 'https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg' },
-            { id: 'tt2467372', title: 'Brooklyn Nine-Nine', year: '2013–2021', type: 'Series', poster: 'https://m.media-amazon.com/images/M/MV5BNzBiODQxZTUtNjc0MC00Yzc1LThmYTMtN2YwYTU3NjgxMmI4XkEyXkFqcGc@._V1_SX300.jpg'},
-            { id: 'tt0816692', title: 'Interstellar', year: '2014', type: 'Movie', poster: 'https://m.media-amazon.com/images/M/MV5BZjdkOTU3MDktN2IxOS00OGEyLWFmMjktY2FiMmZkNWIyODZiXkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_SX300.jpg' },
-            { id: 'tt0903747', title: 'Breaking Bad', year: '2008–2013', type: 'Series', poster: 'https://m.media-amazon.com/images/M/MV5BODkyNThlPjEtMDE3MC00MGI3LTgwZmEtZDIxNDk3OTQzMWNhXkEyXkFqcGdeQXVyMTkxNjUyNQ@@._V1_SX300.jpg' }
-        ];
+        function showGridView() { contentWrapper.style.display = 'block'; detailsViewContainer.style.display = 'none'; messageArea.style.display = 'none'; }
+        function showDetailsView() { contentWrapper.style.display = 'none'; detailsViewContainer.style.display = 'flex'; messageArea.style.display = 'none'; }
+        function showMessage(htmlContent) { contentWrapper.style.display = 'none'; detailsViewContainer.style.display = 'none'; messageArea.style.display = 'block'; messageArea.innerHTML = htmlContent; }
 
-        // --- DOM ELEMENTS ---
-        const searchInput = document.getElementById('search-input');
-        const contentWrapper = document.getElementById('content-wrapper');
-        const resultsGrid = document.getElementById('results-grid');
-        const contentTitle = document.getElementById('content-title');
-        const messageArea = document.getElementById('message-area');
-        const detailsViewContainer = document.getElementById('details-view-container');
-
-        // --- VIEW MANAGEMENT ---
-        function showGridView() {
-            contentWrapper.style.display = 'block';
-            detailsViewContainer.style.display = 'none';
-            messageArea.style.display = 'none';
+        function formatBytes(bytes, decimals = 2) { if (!+bytes) return '0 Bytes'; const k = 1024, dm = decimals < 0 ? 0 : decimals, sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'], i = Math.floor(Math.log(bytes) / Math.log(k)); return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`; }
+        
+        function generateMagnetLink(hash, name) { const trackers = TRACKER_LIST.map(t => `&tr=${encodeURIComponent(t)}`).join(''); return `magnet:?xt=urn:btih:${hash}&dn=${encodeURIComponent(name)}${trackers}`; }
+        
+        function copyMagnetToClipboard(event, hash, name) {
+            const magnetLink = generateMagnetLink(hash, name);
+            navigator.clipboard.writeText(magnetLink).then(() => {
+                const originalText = event.target.innerHTML;
+                event.target.innerHTML = 'COPIED!';
+                setTimeout(() => { event.target.innerHTML = originalText; }, 1500);
+            }).catch(err => console.error('Failed to copy magnet link', err));
         }
 
-        function showDetailsView() {
-            contentWrapper.style.display = 'none';
-            detailsViewContainer.style.display = 'block';
-            messageArea.style.display = 'none';
-        }
-
-        function showMessage(htmlContent) {
-            contentWrapper.style.display = 'none';
-            detailsViewContainer.style.display = 'none';
-            messageArea.style.display = 'block';
-            messageArea.innerHTML = htmlContent;
-        }
-
-        // --- DATA DISPLAY ---
         function displayContent(contentArray) {
-            lastDisplayedContent = contentArray; // Save state for "Back" button
+            lastDisplayedContent = contentArray;
             resultsGrid.innerHTML = ''; 
-            contentArray.forEach(item => {
-                const card = `
-                    <div class="content-card" onclick="fetchAndShowDetails('${item.id}')">
-                        <img src="${item.poster}" alt="${item.title}" class="card-image" onerror="this.onerror=null; this.src='https://via.placeholder.com/220x330/1a1a1a/e0e0e0?text=No+Image';">
-                        <div class="card-body">
-                            <h3 class="card-title">${item.title}</h3>
-                            <div class="card-meta">
-                                <span>${item.year}</span>
-                                <span>|</span>
-                                <span>${item.type.toUpperCase()}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                resultsGrid.innerHTML += card;
-            });
+            contentArray.forEach(item => { resultsGrid.innerHTML += `<div class="content-card" onclick="fetchAndShowDetails('${item.id}')"><img src="${item.poster}" alt="${item.title}" class="card-image" onerror="this.onerror=null; this.src='https://via.placeholder.com/220x330/1a1a1a/e0e0e0?text=No+Image';"><div class="card-body"><h3 class="card-title">${item.title}</h3><div class="card-meta"><span>${item.year}</span><span>|</span><span>${item.type.toUpperCase()}</span></div></div></div>`; });
         }
         
         function displayDetails(details) {
             const rating = details.Ratings && details.Ratings.length > 0 ? details.Ratings[0].Value : 'N/A';
-            const detailsHTML = `
-                <div class="details-view">
-                    <div class="details-poster">
-                        <img src="${details.Poster.replace("300", "500")}" alt="${details.Title}" onerror="this.src='https://via.placeholder.com/400x600/1a1a1a/e0e0e0?text=No+Image';">
-                    </div>
-                    <div class="details-info">
-                        <button class="back-button" onclick="showLastView()">< BACK TO RESULTS</button>
-                        <h2 class="details-title">${details.Title}</h2>
-                        <p class="details-year">${details.Year} · ${details.Rated} · ${details.Runtime}</p>
-                        <p class="details-plot">${details.Plot}</p>
-                        
-                        <div class="details-meta-grid">
-                            <div class="meta-item"><strong>Starring</strong> ${details.Actors}</div>
-                            <div class="meta-item"><strong>Genre</strong> ${details.Genre}</div>
-                            <div class="meta-item"><strong>Language</strong> ${details.Language}</div>
-                            <div class="meta-item"><strong>IMDB Rating</strong> ${rating}</div>
-                        </div>
-
-                        <a href="#" class="stream-button" onclick="alert('Searching for streams for ${details.Title.replace(/'/g, `\\'`)}...')">> FIND STREAM</a>
-                    </div>
-                </div>
-            `;
-            detailsViewContainer.innerHTML = detailsHTML;
+            detailsViewContainer.innerHTML = `<div class="details-view"><div class="details-poster"><img src="${details.Poster.replace("SX300", "SX600")}" alt="${details.Title}" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x450/1a1a1a/e0e0e0?text=No+Image';"></div><div class="details-info"><button class="back-button" onclick="showLastView()">< BACK TO RESULTS</button><h2 class="details-title">${details.Title}</h2><p class="details-year">${details.Year} · ${details.Rated} · ${details.Runtime}</p><p class="details-plot">${details.Plot}</p><div class="details-meta-grid"><div class="meta-item"><strong>Starring</strong> ${details.Actors}</div><div class="meta-item"><strong>Genre</strong> ${details.Genre}</div><div class="meta-item"><strong>Language</strong> ${details.Language}</div><div class="meta-item"><strong>IMDB Rating</strong> ${rating}</div></div></div><div class="right-panel-container" id="right-panel"></div></div>`;
             showDetailsView();
+            fetchAndDisplayTorrents(details.Title);
         }
 
-        function showLastView() {
-            contentTitle.textContent = lastContentTitle;
-            showGridView();
-            displayContent(lastDisplayedContent); // Re-render last saved state
+        function displayTorrents(torrents) {
+            lastDisplayedTorrents = torrents;
+            const container = document.getElementById('right-panel');
+            if (!container) return;
+            const tableRows = torrents.map(t => `<tr><td>${t.name}</td><td>${formatBytes(t.size)}</td><td class="col-seed">${t.seeders}</td><td class="col-leech">${t.leechers}</td><td><a class="action-link" onclick='fetchAndShowFiles(${JSON.stringify(t)})'>> VIEW</a><a class="action-link" onclick="copyMagnetToClipboard(event, '${t.info_hash}', '${t.name.replace(/'/g, `\\'`)}')">> COPY</a></td></tr>`).join('');
+            container.innerHTML = `<h3>STREAM SOURCES</h3><div class="scrollable-content-wrapper"><table class="torrents-table"><thead><tr><th>NAME</th><th>SIZE</th><th>SEED</th><th>LEECH</th><th>ACTIONS</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
+        }
+        
+        function displayFiles(files, torrent) {
+            const container = document.getElementById('right-panel');
+            if (!container) return;
+            const fileListItems = files.map(f => `<li title="${f.path}">${f.path.split('/').pop()} <small>(${formatBytes(f.size)})</small></li>`).join('');
+            container.innerHTML = `<div class="file-browser-header"><h3>FILE BROWSER</h3><button class="back-button" onclick='displayTorrents(lastDisplayedTorrents)'>< BACK TO STREAMS</button><input type="text" class="file-filter-input" placeholder="Filter files..." onkeyup="filterFileList(event)"></div><div class="scrollable-content-wrapper"><ul class="file-list" id="file-list">${fileListItems}</ul></div>`;
         }
 
-        // --- API CALLS & DATA HANDLING ---
+        function filterFileList(event) {
+            const filter = event.target.value.toLowerCase();
+            const listItems = document.querySelectorAll('#file-list li');
+            listItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(filter) ? '' : 'none';
+            });
+        }
+
+        async function fetchAndShowFiles(torrent) {
+            if (metadataCache.has(torrent.info_hash)) {
+                displayFiles(metadataCache.get(torrent.info_hash), torrent);
+                return;
+            }
+            const container = document.getElementById('right-panel');
+            if (!container) return;
+            container.innerHTML = `<h3>FILE BROWSER</h3><div class="spinner-container"><div class="spinner"></div></div>`;
+            try {
+                const magnetLink = generateMagnetLink(torrent.info_hash, torrent.name);
+                const response = await fetch(`${baseURL}/get_torrent_metadata?q=${encodeURIComponent(magnetLink)}`);
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
+                const result = await response.json();
+                if (result.data && result.data.files) {
+                    metadataCache.set(torrent.info_hash, result.data.files);
+                    displayFiles(result.data.files, torrent);
+                } else { throw new Error('Invalid metadata structure'); }
+            } catch (error) {
+                console.error('Fetch Files Error:', error);
+                container.innerHTML = `<h3>FILE BROWSER</h3><p class="message-area" style="display:block; text-align: left; padding: 1rem 0;">> Error: Failed to retrieve file data.</p>`;
+            }
+        }
+        
+        function showLastView() { contentTitle.textContent = lastContentTitle; showGridView(); displayContent(lastDisplayedContent); }
+
+        async function fetchAndDisplayTorrents(title) {
+            const container = document.getElementById('right-panel');
+            container.innerHTML = '<h3>STREAM SOURCES</h3><div class="spinner-container"><div class="spinner"></div></div>';
+            try {
+                const response = await fetch(`${baseURL}/get_torrents?q=${encodeURIComponent(title)}`);
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
+                const result = await response.json();
+                if (result.data && result.data.length > 0) { displayTorrents(result.data); } 
+                else { container.innerHTML = '<h3>STREAM SOURCES</h3><p class="message-area" style="display:block; text-align: left; padding: 1rem 0;">> No streamable sources found for this title.</p>'; }
+            } catch (error) { console.error('Fetch Torrents Error:', error); container.innerHTML = '<h3>STREAM SOURCES</h3><p class="message-area" style="display:block; text-align: left; padding: 1rem 0;">> Error: Failed to retrieve torrent data.</p>'; }
+        }
+
         async function fetchAndShowDetails(imdbID) {
             showMessage('<p>> ACCESSING DATA NODE...</p>');
             updateTimestamp();
@@ -222,81 +211,33 @@
                 const response = await fetch(`${baseURL}/details?q=${encodeURIComponent(imdbID)}`);
                 if (!response.ok) throw new Error(`API Error: ${response.status}`);
                 const result = await response.json();
-                if (result.data) {
-                    displayDetails(result.data);
-                } else {
-                    throw new Error('Invalid data structure from API.');
-                }
-            } catch (error) {
-                console.error('Fetch Details Error:', error);
-                showMessage('<p>> ERROR: COULD NOT RETRIEVE DETAILS.</p>');
-            }
+                if (result.data) displayDetails(result.data);
+                else throw new Error('Invalid data structure from API.');
+            } catch (error) { console.error('Fetch Details Error:', error); showMessage('<p>> ERROR: COULD NOT RETRIEVE DETAILS.</p>'); }
         }
 
         async function fetchSearchResults(query) {
             lastContentTitle = `SEARCH RESULTS FOR: "${query}"`;
             contentTitle.textContent = lastContentTitle;
-            showMessage('<p>> EXECUTING SEARCH...</p>');
+            showGridView();
+            resultsGrid.innerHTML = '<p class="message-area" style="display:block; grid-column: 1 / -1;">> EXECUTING SEARCH...</p>';
             updateTimestamp();
-            showGridView(); // Switch to grid view layout before filling it
-            resultsGrid.innerHTML = ''; // Clear old grid results immediately
-            
             try {
                 const response = await fetch(`${baseURL}/search?q=${encodeURIComponent(query)}`);
                 if (!response.ok) throw new Error(`Network Error: ${response.status}`);
                 const result = await response.json();
-
-                if (result && result.data && Array.isArray(result.data.Search)) {
-                    const mappedResults = result.data.Search.map(item => ({
-                        id: item.imdbID,
-                        title: item.Title,
-                        year: item.Year,
-                        type: item.Type,
-                        poster: item.Poster
-                    }));
+                if (result && result.data && Array.isArray(result.data.Search) && result.data.Search.length > 0) {
+                    const mappedResults = result.data.Search.map(item => ({ id: item.imdbID, title: item.Title, year: item.Year, type: item.Type, poster: item.Poster }));
                     displayContent(mappedResults);
-                } else {
-                    resultsGrid.innerHTML = '<p class="message-area" style="display:block; grid-column: 1 / -1;">> NO MATCHING CONTENT FOUND.</p>';
-                }
-            } catch (error) {
-                console.error('API Fetch Error:', error);
-                resultsGrid.innerHTML = '<p class="message-area" style="display:block; grid-column: 1 / -1;">> ERROR: CONNECTION FAILED.</p>';
-            }
+                } else { resultsGrid.innerHTML = '<p class="message-area" style="display:block; grid-column: 1 / -1;">> NO MATCHING CONTENT FOUND.</p>'; }
+            } catch (error) { console.error('API Fetch Error:', error); resultsGrid.innerHTML = '<p class="message-area" style="display:block; grid-column: 1 / -1;">> ERROR: CONNECTION FAILED.</p>'; }
         }
 
-        function handleSearch() {
-            const query = searchInput.value.trim();
-            if (query) {
-                fetchSearchResults(query);
-            } else {
-                lastContentTitle = 'TRENDING NOW';
-                contentTitle.textContent = lastContentTitle;
-                showGridView();
-                displayContent(mockData);
-            }
-        }
+        function handleSearch() { const query = searchInput.value.trim(); if (query) { fetchSearchResults(query); } else { lastContentTitle = 'TRENDING NOW'; contentTitle.textContent = lastContentTitle; showGridView(); displayContent(mockData); } }
+        function updateTimestamp() { const now = new Date(), pad = (num) => String(num).padStart(2, '0'); document.getElementById('last-updated').textContent = `LAST UPDATE: ${now.getUTCFullYear()}/${pad(now.getUTCMonth() + 1)}/${pad(now.getUTCDate())} ${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())} UTC`; }
         
-        function updateTimestamp() {
-            const now = new Date();
-            const pad = (num) => String(num).padStart(2, '0');
-            const timestamp = `${now.getUTCFullYear()}/${pad(now.getUTCMonth() + 1)}/${pad(now.getUTCDate())} ${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())} UTC`;
-            document.getElementById('last-updated').textContent = `LAST UPDATE: ${timestamp}`;
-        }
-        
-        // --- EVENT LISTENERS ---
-        searchInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                handleSearch();
-            }
-        });
-
-        // --- INITIAL LOAD ---
-        window.addEventListener('load', () => {
-            contentTitle.textContent = lastContentTitle;
-            showGridView();
-            displayContent(mockData);
-            updateTimestamp();
-        });
+        searchInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') handleSearch(); });
+        window.addEventListener('load', () => { contentTitle.textContent = lastContentTitle; showGridView(); displayContent(mockData); updateTimestamp(); });
     </script>
 
 </body>
