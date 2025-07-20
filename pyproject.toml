@@ -1,7 +1,7 @@
 [project]
 name = "ez-stream"
 version = "0.1.0"
-description = "Add your description here"
+description = "Stream video torrent files directly to VLC or in your browser."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
