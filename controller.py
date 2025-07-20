@@ -60,3 +60,5 @@ class TorrentStreamerController:
             self.ui.newline()
         except KeyboardInterrupt:
             pass
+        finally:
+            self.engine.save_resume_data()

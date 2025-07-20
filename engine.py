@@ -1,6 +1,7 @@
 """
 Torrent engine abstraction using python-libtorrent.
 """
+import os
 import time
 import libtorrent as lt
 
@@ -12,23 +13,48 @@ class TorrentEngine:
 
     def __init__(self, save_path: str):
         self.save_path = save_path
-        self.session = lt.session()
-        self.session.listen_on(6881, 6891)
+        self.resume_dir = os.path.join(save_path, ".resume")
+        os.makedirs(self.resume_dir, exist_ok=True)
+
+        settings = {
+            "user_agent": "ez-stream/0.1.0",
+            "listen_interfaces": "0.0.0.0:6881",
+            "enable_dht": True,
+            "alert_mask": lt.alert_category.all,
+        }
+        self.session = lt.session(settings)
         self.handle = None
 
     def add_magnet(self, magnet_uri: str) -> None:
-        """Add a magnet URI to the session (async)."""
-        params = {
-            'save_path': self.save_path,
-            'storage_mode': lt.storage_mode_t.storage_mode_sparse,
-        }
-        self.handle = lt.add_magnet_uri(self.session, magnet_uri, params)
+        """Add a magnet URI to the session, loading resume data if available."""
+        magnet_params = lt.parse_magnet_uri(magnet_uri)
+        info_hash_str = str(magnet_params.info_hashes.v1)
+        resume_file = os.path.join(self.resume_dir, f"{info_hash_str}.fastresume")
+
+        if os.path.exists(resume_file):
+            with open(resume_file, "rb") as f:
+                resume_data = f.read()
+            try:
+                params = lt.read_resume_data(resume_data)
+                # Add trackers from magnet link to the resumed session
+                params.trackers.extend([t.url for t in magnet_params.trackers])
+                params.dht_nodes.extend(magnet_params.dht_nodes)
+            except Exception:
+                # If resume data is corrupt, start fresh
+                params = magnet_params
+        else:
+            params = magnet_params
+
+        params.save_path = self.save_path
+        params.storage_mode = lt.storage_mode_t.storage_mode_sparse
+        self.handle = self.session.add_torrent(params)
 
     def fetch_metadata(self) -> TorrentMetadata:
         """Block until torrent metadata is available and return it."""
         assert self.handle, "Magnet URI must be added first"
         while not self.handle.has_metadata():
-            time.sleep(1)
+            self.session.pop_alerts() # Clear alerts to avoid buffer buildup
+            time.sleep(0.1)
         info = self.handle.get_torrent_info()
         piece_size = info.piece_length()
         files = []
@@ -80,3 +106,30 @@ class TorrentEngine:
             percent=percent,
             rate=rate,
         )
+
+    def save_resume_data(self):
+        """Saves the resume data for the current torrent to a file."""
+        if not (self.handle and self.handle.is_valid() and self.handle.has_metadata()):
+            return
+
+        self.handle.save_resume_data(lt.save_resume_flags_t.save_info_dict)
+
+        start_time = time.time()
+        while time.time() - start_time < 5:  # 5-second timeout
+            alerts = self.session.pop_alerts()
+            for alert in alerts:
+                if isinstance(alert, lt.save_resume_data_alert):
+                    entry = lt.write_resume_data(alert.params)
+                    data = lt.bencode(entry)
+                    info_hash_str = str(alert.params.info_hashes.v1)
+                    resume_file = os.path.join(self.resume_dir, f"{info_hash_str}.fastresume")
+                    with open(resume_file, "wb") as f:
+                        f.write(data)
+                    return
+            time.sleep(0.2)
+
+    def close(self):
+        """Save resume data and clean up the session."""
+        self.save_resume_data()
+        if self.handle and self.handle.is_valid():
+            self.session.remove_torrent(self.handle)
