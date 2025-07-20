@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vortex Stream</title>
+    <style>
+        /* --- FONT IMPORT --- */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Teko:wght@400;600&display=swap');
+
+        /* --- CSS VARIABLES / THEME --- */
+        :root {
+            --background-primary: #111111;
+            --background-secondary: #1a1a1a;
+            --background-tertiary: #222222;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --accent-primary: #ff8c00; /* Dark Orange */
+            --accent-secondary: #444444;
+            --border-color: #333333;
+            --font-primary: 'Teko', sans-serif;
+            --font-secondary: 'Roboto Mono', monospace;
+        }
+
+        /* --- GENERAL RESET & SETUP --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background-color: var(--background-primary);
+            color: var(--text-primary);
+            font-family: var(--font-primary);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* --- HEADER & NAVIGATION --- */
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: var(--background-primary);
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+        .logo {
+            font-family: var(--font-primary);
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: var(--accent-primary);
+            letter-spacing: 2px;
+            text-shadow: 0 0 5px var(--accent-primary);
+        }
+        .search-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            padding: 0 2rem;
+        }
+        .search-box {
+            width: 100%;
+            max-width: 600px;
+            background-color: var(--background-secondary);
+            border: 1px solid var(--border-color);
+            padding: 0.75rem 1rem;
+            color: var(--text-primary);
+            font-family: var(--font-secondary);
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .search-box:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 10px rgba(255, 140, 0, 0.5);
+        }
+        .header-status {
+            font-family: var(--font-secondary);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-align: right;
+        }
+
+        /* --- MAIN CONTENT AREA --- */
+        .main-content { flex: 1; padding: 2rem; display: flex; flex-direction: column; }
+        .content-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            border-left: 4px solid var(--accent-primary);
+            padding-left: 1rem;
+        }
+        #results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1.5rem;
+            flex: 1;
+        }
+        .content-card {
+            background-color: var(--background-secondary);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .content-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+            border-color: var(--accent-secondary);
+        }
+        .card-image {
+            width: 100%;
+            height: 330px;
+            object-fit: cover;
+            background-color: var(--background-tertiary);
+        }
+        .card-body { padding: 1rem; display: flex; flex-direction: column; flex-grow: 1; }
+        .card-title {
+            font-family: var(--font-primary);
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            line-height: 1.1;
+        }
+        .card-meta {
+            font-family: var(--font-secondary);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: auto;
+        }
+        .card-meta span { margin-right: 10px; }
+        .card-button {
+            margin-top: 1rem;
+            padding: 0.6rem;
+            background-color: var(--accent-primary);
+            color: var(--background-primary);
+            text-align: center;
+            text-decoration: none;
+            font-family: var(--font-secondary);
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .card-button:hover { background-color: var(--text-primary); color: var(--background-primary); }
+        .message-area {
+            font-family: var(--font-secondary);
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            text-align: center;
+            width: 100%;
+            padding: 4rem 0;
+            display: none; /* Hidden by default */
+        }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="logo">VORTEX</div>
+        <div class="search-container">
+            <input type="text" id="search-input" class="search-box" placeholder="Search for a show, movie, or content...">
+        </div>
+        <div class="header-status">
+            <div>SYSTEM STATUS: ONLINE</div>
+            <div id="last-updated">LAST UPDATE: 2025/07/21 10:00 UTC</div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <h2 id="content-title" class="content-title">TRENDING NOW</h2>
+        <div id="results-grid">
+            <!-- Content will be injected here by JavaScript -->
+        </div>
+        <div id="message-area" class="message-area">
+            <!-- This will display loading, error, and no results messages -->
+        </div>
+    </main>
+
+    <script>
+        // --- CONFIGURATION ---
+        const baseURL = 'http://localhost:8000';
+
+        // --- MOCK DATA (For initial "Trending Now" view) ---
+        const mockData = [
+            { id: 'tt0133093', title: 'The Matrix', year: '1999', type: 'Movie', poster: 'https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg' },
+            { id: 'tt4158110', title: 'Mr. Robot', year: '2015–2019', type: 'Series', poster: 'https://m.media-amazon.com/images/M/MV5BM2QyNDIzOGMtNThhNS00MmUwLWI0ZjUtZTMzZWNlZTY2YTIxXkEyXkFqcGdeQXVyMTAwMzM3NDI3._V1_SX300.jpg' },
+            { id: 'tt0816692', title: 'Interstellar', year: '2014', type: 'Movie', poster: 'https://m.media-amazon.com/images/M/MV5BZjdkOTU3MDktN2IxOS00OGEyLWFmMjktY2FiMmZkNWIyODZiXkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_SX300.jpg' },
+            { id: 'tt0903747', title: 'Breaking Bad', year: '2008–2013', type: 'Series', poster: 'https://m.media-amazon.com/images/M/MV5BODkyNThlPjEtMDE3MC00MGI3LTgwZmEtZDIxNDk3OTQzMWNhXkEyXkFqcGdeQXVyMTkxNjUyNQ@@._V1_SX300.jpg' }
+        ];
+
+        // --- DOM ELEMENTS ---
+        const searchInput = document.getElementById('search-input');
+        const resultsGrid = document.getElementById('results-grid');
+        const contentTitle = document.getElementById('content-title');
+        const messageArea = document.getElementById('message-area');
+        
+        // --- FUNCTIONS ---
+
+        /**
+         * Renders content cards to the grid.
+         * @param {Array} contentArray - An array of content objects.
+         */
+        function displayContent(contentArray) {
+            resultsGrid.innerHTML = ''; // Clear previous results
+            
+            contentArray.forEach(item => {
+                const card = `
+                    <div class="content-card">
+                        <img src="${item.poster}" alt="${item.title}" class="card-image" onerror="this.onerror = null; this.src='https://via.placeholder.com/220x330/1a1a1a/e0e0e0?text=No+Image';">
+                        <div class="card-body">
+                            <h3 class="card-title">${item.title}</h3>
+                            <div class="card-meta">
+                                <span>${item.year}</span>
+                                <span>|</span>
+                                <span>${item.type.toUpperCase()}</span>
+                            </div>
+                            <a href="#" class="card-button" onclick="alert('Initiating stream for ${item.title.replace(/'/g, "\\'")}')">> INITIATE STREAM</a>
+                        </div>
+                    </div>
+                `;
+                resultsGrid.innerHTML += card;
+            });
+        }
+        
+        /**
+         * Shows a message (loading, error, no results) and hides the grid.
+         * @param {String} htmlContent - The HTML content for the message.
+         */
+        function showMessage(htmlContent) {
+            resultsGrid.style.display = 'none';
+            messageArea.style.display = 'block';
+            messageArea.innerHTML = htmlContent;
+        }
+        
+        /**
+         * Hides the message area and shows the grid.
+         */
+        function showGrid() {
+            messageArea.style.display = 'none';
+            resultsGrid.style.display = 'grid';
+        }
+
+        /**
+         * Fetches search results from the API.
+         * @param {String} query - The search term.
+         */
+        async function fetchSearchResults(query) {
+            contentTitle.textContent = `SEARCH RESULTS FOR: "${query}"`;
+            showMessage('<p>> EXECUTING SEARCH...</p>');
+            updateTimestamp();
+            
+            try {
+                const response = await fetch(`${baseURL}/search?q=${encodeURIComponent(query)}`);
+                if (!response.ok) {
+                    throw new Error(`Network response was not ok (status: ${response.status})`);
+                }
+                const result = await response.json();
+
+                // Check if the expected data structure exists and is an array
+                if (result && result.data && Array.isArray(result.data.Search)) {
+                    // Map API response to our internal format
+                    const mappedResults = result.data.Search.map(item => ({
+                        id: item.imdbID,
+                        title: item.Title,
+                        year: item.Year,
+                        type: item.Type,
+                        poster: item.Poster
+                    }));
+                    showGrid();
+                    displayContent(mappedResults);
+                } else {
+                    // Handle case where API returns data, but Search array is missing or empty
+                    showMessage('<p>> NO MATCHING CONTENT FOUND.</p><p>> TRY REFINING YOUR SEARCH QUERY...</p>');
+                }
+
+            } catch (error) {
+                console.error('API Fetch Error:', error);
+                showMessage('<p>> ERROR: COULD NOT CONNECT TO THE SERVICE.</p><p>> PLEASE TRY AGAIN LATER.</p>');
+            }
+        }
+
+        /**
+         * Handles the search input event.
+         */
+        function handleSearch() {
+            const query = searchInput.value.trim();
+
+            if (query) {
+                fetchSearchResults(query);
+            } else {
+                // If search is cleared, show trending again
+                contentTitle.textContent = 'TRENDING NOW';
+                showGrid();
+                displayContent(mockData);
+            }
+        }
+        
+        /**
+         * Updates the timestamp in the header.
+         */
+        function updateTimestamp() {
+            const now = new Date();
+            const pad = (num) => String(num).padStart(2, '0');
+            const timestamp = `${now.getUTCFullYear()}/${pad(now.getUTCMonth() + 1)}/${pad(now.getUTCDate())} ${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())} UTC`;
+            document.getElementById('last-updated').textContent = `LAST UPDATE: ${timestamp}`;
+        }
+        
+        // --- EVENT LISTENERS ---
+        // Use 'change' or 'keydown' for better control than 'keyup'
+        searchInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                handleSearch();
+            }
+        });
+
+        // --- INITIAL LOAD ---
+        window.addEventListener('load', () => {
+            contentTitle.textContent = 'TRENDING NOW';
+            showGrid();
+            displayContent(mockData);
+        });
+    </script>
+
+</body>
+</html>
