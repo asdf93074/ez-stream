@@ -185,7 +185,7 @@
             const detailsHTML = `
                 <div class="details-view">
                     <div class="details-poster">
-                        <img src="${details.Poster}" alt="${details.Title}" onerror="this.src='https://via.placeholder.com/400x600/1a1a1a/e0e0e0?text=No+Image';">
+                        <img src="${details.Poster.replace("300", "500")}" alt="${details.Title}" onerror="this.src='https://via.placeholder.com/400x600/1a1a1a/e0e0e0?text=No+Image';">
                     </div>
                     <div class="details-info">
                         <button class="back-button" onclick="showLastView()">< BACK TO RESULTS</button>
