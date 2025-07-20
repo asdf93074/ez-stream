@@ -154,7 +154,7 @@
         function displayFiles(files, torrent) {
             const container = document.getElementById('right-panel');
             if (!container) return;
-            const fileListItems = files.map(f => `<li title="${f.path}">${f.path.split('/').pop()} <small>(${formatBytes(f.size)})</small></li>`).join('');
+            const fileListItems = files.map(f => `<li title="${f.path}" onclick='startDownloadAndStream(${JSON.stringify(torrent)}, ${JSON.stringify(f)})'>${f.path.split('/').pop()} <small>(${formatBytes(f.size)})</small></li>`).join('');
             container.innerHTML = `<div class="file-browser-header"><h3>FILE BROWSER</h3><button class="back-button" onclick='displayTorrents(lastDisplayedTorrents)'>< BACK TO STREAMS</button><input type="text" class="file-filter-input" placeholder="Filter files..." onkeyup="filterFileList(event)"></div><div class="scrollable-content-wrapper"><ul class="file-list" id="file-list">${fileListItems}</ul></div>`;
         }
 
@@ -191,6 +191,51 @@
         }
         
         function showLastView() { contentTitle.textContent = lastContentTitle; showGridView(); displayContent(lastDisplayedContent); }
+
+        async function startDownloadAndStream(torrent, file) {
+            const magnetLink = generateMagnetLink(torrent.info_hash, torrent.name);
+            const savePath = './out'; // Fixed save path
+            const fileChoice = file.index; // Use file index for choice
+
+            showMessage('<p>> INITIATING DOWNLOAD AND PREPARING STREAM...</p>');
+
+            try {
+                const response = await fetch(`${baseURL}/download_file`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ magnet_link: magnetLink, file_choice: fileChoice, save_path: savePath })
+                });
+
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
+                const result = await response.json();
+
+                if (result.error) {
+                    showMessage(`<p>> ERROR: ${result.error}</p>`);
+                    return;
+                }
+
+                const streamFilePath = result.file_path;
+                const videoPlayerHtml = `
+                    <div class="details-view">
+                        <div class="details-info" style="flex: 1 1 100%;">
+                            <button class="back-button" onclick="showLastView()">< BACK TO RESULTS</button>
+                            <h2 class="details-title">${file.path.split('/').pop()}</h2>
+                            <video controls autoplay width="100%" style="max-height: 80vh; background-color: black;">
+                                <source src="${baseURL}/stream_file?file_path=${encodeURIComponent(streamFilePath)}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                            <p style="margin-top: 1rem; font-family: var(--font-secondary);">Streaming from: ${streamFilePath}</p>
+                        </div>
+                    </div>
+                `;
+                detailsViewContainer.innerHTML = videoPlayerHtml;
+                showDetailsView();
+
+            } catch (error) {
+                console.error('Download and Stream Error:', error);
+                showMessage('<p>> ERROR: FAILED TO START DOWNLOAD OR STREAM.</p>');
+            }
+        }
 
         async function fetchAndDisplayTorrents(title) {
             const container = document.getElementById('right-panel');

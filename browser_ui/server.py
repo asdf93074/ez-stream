@@ -1,3 +1,4 @@
+import mimetypes
 import sys
 import os
 
@@ -7,8 +8,9 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from typing import Union
 
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi import FastAPI, Request, Body
+from fastapi.responses import HTMLResponse, StreamingResponse
+import aiofiles
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
@@ -28,7 +30,6 @@ templates = Jinja2Templates(directory="templates")
 
 
 def fetch_torrent_metadata(ml: str):
-    torrent_engine = TorrentEngine("./out")
     torrent_engine.add_magnet(ml)
     return torrent_engine.fetch_metadata()
 
@@ -57,7 +58,7 @@ async def find_torrent_metadata(q: str):
     return { "data": data }
 
 @app.post("/download_file")
-async def download_file(magnet_link: str, file_choice: Union[int, str], save_path: str):
+async def download_file(magnet_link: str = Body(...), file_choice: Union[int, str] = Body(...), save_path: str = Body(...)):
     metadata = fetch_torrent_metadata(magnet_link)
     if not metadata:
         return {"error": "Could not fetch torrent metadata."}
@@ -71,14 +72,42 @@ async def download_file(magnet_link: str, file_choice: Union[int, str], save_pat
         return {"error": str(e)}
 
 @app.get("/stream_file")
-async def stream_file(file_path: str):
-    import mimetypes
-
+async def stream_file(file_path: str, request: Request):
     if not os.path.exists(file_path):
         return {"error": "File not found."}
-    
+
+    file_size = os.path.getsize(file_path)
     media_type, _ = mimetypes.guess_type(file_path)
     if not media_type:
-        media_type = "application/octet-stream" # Default if type cannot be guessed
+        media_type = "application/octet-stream"
 
-    return FileResponse(file_path, media_type=media_type)
+    range_header = request.headers.get("Range")
+
+    if range_header:
+        byte_range = range_header.replace("bytes=", "").split("-")
+        start = int(byte_range[0])
+        end = int(byte_range[1]) if len(byte_range) > 1 and byte_range[1] else file_size - 1
+        content_length = (end - start) + 1
+        headers = {
+            "Content-Range": f"bytes {start}-{end}/{file_size}",
+            "Content-Length": str(content_length),
+            "Accept-Ranges": "bytes",
+        }
+        status_code = 206
+    else:
+        start = 0
+        end = file_size - 1
+        content_length = file_size
+        headers = {
+            "Content-Length": str(content_length),
+            "Accept-Ranges": "bytes",
+        }
+        status_code = 200
+
+    async def file_iterator():
+        async with aiofiles.open(file_path, mode="rb") as f:
+            await f.seek(start)
+            while (chunk := await f.read(8192)):
+                yield chunk
+
+    return StreamingResponse(file_iterator(), media_type=media_type, headers=headers, status_code=status_code)
