@@ -1,10 +1,10 @@
-_This project was vibecoded with OpenAI's Codex CLI._
+_This project was vibecoded with OpenAI's Codex CLI + Gemini + 10% manual coding._
 
 ---
 
 # EZ-Stream
 
-A simple torrent streamer with a CLI and GUI.
+A simple torrent streamer with a CLI, GUI (Python), and a web-based GUI (WIP) now too!
 
 ## Features
 
