@@ -65,7 +65,7 @@
         .meta-item strong { color: var(--accent-primary); display: block; font-size: 0.8rem; margin-bottom: 0.25rem; font-weight: 400; }
         
         /* --- TORRENTS & FILE LIST COLUMN --- */
-        .right-panel-container { flex: 1 1 55%; display: flex; flex-direction: column; border-left: 1px solid var(--border-color); padding-left: 2rem; }
+        .right-panel-container { flex: 0 0 700px; display: flex; flex-direction: column; border-left: 1px solid var(--border-color); padding-left: 2rem; }
         .right-panel-container h3 { font-size: 2rem; border-left: 4px solid var(--accent-primary); padding-left: 1rem; margin-bottom: 1rem; flex-shrink: 0; }
         .scrollable-content-wrapper { overflow-y: auto; flex-grow: 1; }
         .torrents-table { width: 100%; border-collapse: collapse; font-family: var(--font-secondary); font-size: 0.9rem; }
@@ -74,7 +74,8 @@
         .torrents-table th { color: var(--accent-primary); font-weight: 400; font-size: 0.8rem; position: sticky; top: 0; background-color: var(--background-primary); z-index: 1; }
         .torrents-table td.col-seed { color: var(--seed-color); }
         .torrents-table td.col-leech { color: var(--leech-color); }
-        .action-link { display: inline-block; text-decoration: none; color: var(--accent-primary); border: 1px solid var(--accent-secondary); padding: 0.3rem 0.6rem; transition: all 0.2s; cursor: pointer; margin-right: 0.5rem; }
+        .action-buttons-container { display: flex; gap: 0.5rem; align-items: center; }
+        .action-link { display: inline-block; text-decoration: none; color: var(--accent-primary); border: 1px solid var(--accent-secondary); padding: 0.3rem 0.6rem; transition: all 0.2s; cursor: pointer; white-space: nowrap; }
         .action-link:hover { background-color: var(--accent-primary); color: var(--background-primary); border-color: var(--accent-primary); }
 
         /* --- FILE BROWSER --- */
@@ -107,21 +108,24 @@
 
     <script>
         const baseURL = 'http://localhost:8000';
-        let lastDisplayedContent = [], lastContentTitle = 'TRENDING NOW', lastDisplayedTorrents = [];
         const metadataCache = new Map();
         const TRACKER_LIST = [ 'udp://tracker.opentrackr.org:1337', 'udp://open.stealth.si:80/announce', 'udp://tracker.torrent.eu.org:451/announce', 'udp://tracker.bittor.pw:1337/announce', 'udp://public.popcorn-tracker.org:6969/announce', 'udp://tracker.dler.org:6969/announce', 'udp://exodus.desync.com:6969', 'udp://open.demonii.com:1337/announce' ];
         const mockData = [ { id: 'tt0133093', title: 'The Matrix', year: '1999', type: 'Movie', poster: 'https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg' }, { id: 'tt2467372', title: 'Brooklyn Nine-Nine', year: '2013–2021', type: 'Series', poster: 'https://m.media-amazon.com/images/M/MV5BNzBiODQxZTUtNjc0MC00Yzc1LThmYTMtN2YwYTU3NjgxMmI4XkEyXkFqcGc@._V1_SX300.jpg'}, { id: 'tt0816692', title: 'Interstellar', year: '2014', type: 'Movie', poster: 'https://m.media-amazon.com/images/M/MV5BZjdkOTU3MDktN2IxOS00OGEyLWFmMjktY2FiMmZkNWIyODZiXkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_SX300.jpg' }, { id: 'tt0903747', title: 'Breaking Bad', year: '2008–2013', type: 'Series', poster: 'https://m.media-amazon.com/images/M/MV5BODkyNThlPjEtMDE3MC00MGI3LTgwZmEtZDIxNDk3OTQzMWNhXkEyXkFqcGdeQXVyMTkxNjUyNQ@@._V1_SX300.jpg' } ];
+        
+        // --- DOM Elements ---
         const searchInput = document.getElementById('search-input'), contentWrapper = document.getElementById('content-wrapper'), resultsGrid = document.getElementById('results-grid'), contentTitle = document.getElementById('content-title'), messageArea = document.getElementById('message-area'), detailsViewContainer = document.getElementById('details-view-container');
 
-        function showGridView() { contentWrapper.style.display = 'block'; detailsViewContainer.style.display = 'none'; messageArea.style.display = 'none'; }
+        // --- View Management ---
+        function showGridView() { contentWrapper.style.display = 'flex'; detailsViewContainer.style.display = 'none'; messageArea.style.display = 'none'; contentWrapper.style.flexDirection = 'column'; }
         function showDetailsView() { contentWrapper.style.display = 'none'; detailsViewContainer.style.display = 'flex'; messageArea.style.display = 'none'; }
         function showMessage(htmlContent) { contentWrapper.style.display = 'none'; detailsViewContainer.style.display = 'none'; messageArea.style.display = 'block'; messageArea.innerHTML = htmlContent; }
 
+        // --- Utility Functions ---
         function formatBytes(bytes, decimals = 2) { if (!+bytes) return '0 Bytes'; const k = 1024, dm = decimals < 0 ? 0 : decimals, sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'], i = Math.floor(Math.log(bytes) / Math.log(k)); return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`; }
-        
         function generateMagnetLink(hash, name) { const trackers = TRACKER_LIST.map(t => `&tr=${encodeURIComponent(t)}`).join(''); return `magnet:?xt=urn:btih:${hash}&dn=${encodeURIComponent(name)}${trackers}`; }
         
         function copyMagnetToClipboard(event, hash, name) {
+            event.stopPropagation();
             const magnetLink = generateMagnetLink(hash, name);
             navigator.clipboard.writeText(magnetLink).then(() => {
                 const originalText = event.target.innerHTML;
@@ -130,50 +134,67 @@
             }).catch(err => console.error('Failed to copy magnet link', err));
         }
 
-        function displayContent(contentArray) {
-            lastDisplayedContent = contentArray;
+        // --- Display Functions (Rendering only) ---
+        function displayContent(title, contentArray) {
+            contentTitle.textContent = title;
             resultsGrid.innerHTML = ''; 
-            contentArray.forEach(item => { resultsGrid.innerHTML += `<div class="content-card" onclick="fetchAndShowDetails('${item.id}')"><img src="${item.poster}" alt="${item.title}" class="card-image" onerror="this.onerror=null; this.src='https://via.placeholder.com/220x330/1a1a1a/e0e0e0?text=No+Image';"><div class="card-body"><h3 class="card-title">${item.title}</h3><div class="card-meta"><span>${item.year}</span><span>|</span><span>${item.type.toUpperCase()}</span></div></div></div>`; });
+            contentArray.forEach(item => {
+                resultsGrid.innerHTML += `<div class="content-card" onclick="navigateTo('/app/details/${item.id}')"><img src="${item.poster}" alt="${item.title}" class="card-image" onerror="this.onerror=null; this.src='https://via.placeholder.com/220x330/1a1a1a/e0e0e0?text=No+Image';"><div class="card-body"><h3 class="card-title">${item.title}</h3><div class="card-meta"><span>${item.year}</span></div></div></div>`;
+            });
+            showGridView();
         }
         
-        function displayDetails(details) {
+        function displayDetailsView(details) {
             const rating = details.Ratings && details.Ratings.length > 0 ? details.Ratings[0].Value : 'N/A';
-            detailsViewContainer.innerHTML = `<div class="details-view"><div class="details-poster"><img src="${details.Poster.replace("SX300", "SX600")}" alt="${details.Title}" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x450/1a1a1a/e0e0e0?text=No+Image';"></div><div class="details-info"><button class="back-button" onclick="showLastView()">< BACK TO RESULTS</button><h2 class="details-title">${details.Title}</h2><p class="details-year">${details.Year} · ${details.Rated} · ${details.Runtime}</p><p class="details-plot">${details.Plot}</p><div class="details-meta-grid"><div class="meta-item"><strong>Starring</strong> ${details.Actors}</div><div class="meta-item"><strong>Genre</strong> ${details.Genre}</div><div class="meta-item"><strong>Language</strong> ${details.Language}</div><div class="meta-item"><strong>IMDB Rating</strong> ${rating}</div></div></div><div class="right-panel-container" id="right-panel"></div></div>`;
+            detailsViewContainer.innerHTML = `<div class="details-view"><div class="details-poster"><img src="${details.Poster.replace("SX300", "SX600")}" alt="${details.Title}" onerror="this.onerror=null; this.src='https://via.placeholder.com/300x450/1a1a1a/e0e0e0?text=No+Image';"></div><div class="details-info"><button class="back-button" onclick="history.back()">< BACK</button><h2 class="details-title">${details.Title}</h2><p class="details-year">${details.Year} · ${details.Rated} · ${details.Runtime}</p><p class="details-plot">${details.Plot}</p><div class="details-meta-grid"><div class="meta-item"><strong>Starring</strong> ${details.Actors}</div><div class="meta-item"><strong>Genre</strong> ${details.Genre}</div><div class="meta-item"><strong>Language</strong> ${details.Language}</div><div class="meta-item"><strong>IMDB Rating</strong> ${rating}</div></div></div><div class="right-panel-container" id="right-panel"></div></div>`;
             showDetailsView();
-            fetchAndDisplayTorrents(details.Title);
         }
 
-        function displayTorrents(torrents) {
-            lastDisplayedTorrents = torrents;
+        function displayTorrents(torrents, currentImdbId) {
             const container = document.getElementById('right-panel');
             if (!container) return;
-            const tableRows = torrents.map(t => `<tr><td>${t.name}</td><td>${formatBytes(t.size)}</td><td class="col-seed">${t.seeders}</td><td class="col-leech">${t.leechers}</td><td><a class="action-link" onclick='fetchAndShowFiles(${JSON.stringify(t)})'>> VIEW</a><a class="action-link" onclick="copyMagnetToClipboard(event, '${t.info_hash}', '${t.name.replace(/'/g, `\\'`)}')">> COPY</a></td></tr>`).join('');
+            const tableRows = torrents.map(t => `<tr><td>${t.name}</td><td>${formatBytes(t.size)}</td><td class="col-seed">${t.seeders}</td><td class="col-leech">${t.leechers}</td><td><div class="action-buttons-container"><a class="action-link" onclick="navigateTo('/app/details/${currentImdbId}/files/${t.info_hash}')">> VIEW</a><a class="action-link" onclick="copyMagnetToClipboard(event, '${t.info_hash}', '${t.name.replace(/'/g, `\\'`)}')">> COPY</a></div></td></tr>`).join('');
             container.innerHTML = `<h3>STREAM SOURCES</h3><div class="scrollable-content-wrapper"><table class="torrents-table"><thead><tr><th>NAME</th><th>SIZE</th><th>SEED</th><th>LEECH</th><th>ACTIONS</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
         }
         
-        function displayFiles(files, torrent) {
+        function displayFiles(files, torrent, currentImdbId) {
             const container = document.getElementById('right-panel');
             if (!container) return;
             const fileListItems = files.map(f => `<li title="${f.path}" onclick='startDownloadAndStream(${JSON.stringify(torrent)}, ${JSON.stringify(f)})'>${f.path.split('/').pop()} <small>(${formatBytes(f.size)})</small></li>`).join('');
-            container.innerHTML = `<div class="file-browser-header"><h3>FILE BROWSER</h3><button class="back-button" onclick='displayTorrents(lastDisplayedTorrents)'>< BACK TO STREAMS</button><input type="text" class="file-filter-input" placeholder="Filter files..." onkeyup="filterFileList(event)"></div><div class="scrollable-content-wrapper"><ul class="file-list" id="file-list">${fileListItems}</ul></div>`;
+            container.innerHTML = `<div class="file-browser-header"><h3>FILE BROWSER</h3><button class="back-button" onclick="navigateTo('/app/details/${currentImdbId}')">< BACK TO STREAMS</button><input type="text" class="file-filter-input" placeholder="Filter files..." onkeyup="filterFileList(event)"></div><div class="scrollable-content-wrapper"><ul class="file-list" id="file-list">${fileListItems}</ul></div>`;
         }
 
         function filterFileList(event) {
             const filter = event.target.value.toLowerCase();
-            const listItems = document.querySelectorAll('#file-list li');
-            listItems.forEach(item => {
-                const text = item.textContent.toLowerCase();
-                item.style.display = text.includes(filter) ? '' : 'none';
-            });
+            document.querySelectorAll('#file-list li').forEach(item => item.style.display = item.textContent.toLowerCase().includes(filter) ? '' : 'none');
         }
 
-        async function fetchAndShowFiles(torrent) {
+        // --- Data Fetching & Business Logic ---
+        async function fetchTorrents(title, currentImdbId, andShowFilesForHash = null) {
+            const container = document.getElementById('right-panel');
+            container.innerHTML = '<h3>STREAM SOURCES</h3><div class="spinner-container"><div class="spinner"></div></div>';
+            try {
+                const response = await fetch(`${baseURL}/get_torrents?q=${encodeURIComponent(title)}`);
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
+                const result = await response.json();
+                if (result.data && result.data.length > 0) {
+                    if (andShowFilesForHash) {
+                        const targetTorrent = result.data.find(t => t.info_hash === andShowFilesForHash);
+                        if (targetTorrent) fetchAndShowFiles(targetTorrent, currentImdbId);
+                        else displayTorrents(result.data, currentImdbId);
+                    } else {
+                        displayTorrents(result.data, currentImdbId);
+                    }
+                } else { container.innerHTML = '<h3>STREAM SOURCES</h3><p class="message-area" style="display:block; text-align: left; padding: 1rem 0;">> No streamable sources found for this title.</p>'; }
+            } catch (error) { console.error('Fetch Torrents Error:', error); container.innerHTML = '<h3>STREAM SOURCES</h3><p class="message-area" style="display:block; text-align: left; padding: 1rem 0;">> Error: Failed to retrieve torrent data.</p>'; }
+        }
+        
+        async function fetchAndShowFiles(torrent, currentImdbId) {
+            const container = document.getElementById('right-panel');
             if (metadataCache.has(torrent.info_hash)) {
-                displayFiles(metadataCache.get(torrent.info_hash), torrent);
+                displayFiles(metadataCache.get(torrent.info_hash), torrent, currentImdbId);
                 return;
             }
-            const container = document.getElementById('right-panel');
-            if (!container) return;
             container.innerHTML = `<h3>FILE BROWSER</h3><div class="spinner-container"><div class="spinner"></div></div>`;
             try {
                 const magnetLink = generateMagnetLink(torrent.info_hash, torrent.name);
@@ -182,108 +203,84 @@
                 const result = await response.json();
                 if (result.data && result.data.files) {
                     metadataCache.set(torrent.info_hash, result.data.files);
-                    displayFiles(result.data.files, torrent);
+                    displayFiles(result.data.files, torrent, currentImdbId);
                 } else { throw new Error('Invalid metadata structure'); }
-            } catch (error) {
-                console.error('Fetch Files Error:', error);
-                container.innerHTML = `<h3>FILE BROWSER</h3><p class="message-area" style="display:block; text-align: left; padding: 1rem 0;">> Error: Failed to retrieve file data.</p>`;
-            }
+            } catch (error) { console.error('Fetch Files Error:', error); container.innerHTML = `<h3>FILE BROWSER</h3><button class="back-button" onclick="navigateTo('/app/details/${currentImdbId}')">< BACK TO STREAMS</button><p class="message-area" style="display:block; text-align: left; padding: 1rem 0;">> Error: Failed to retrieve file data.</p>`; }
         }
-        
-        function showLastView() { contentTitle.textContent = lastContentTitle; showGridView(); displayContent(lastDisplayedContent); }
 
         async function startDownloadAndStream(torrent, file) {
             const magnetLink = generateMagnetLink(torrent.info_hash, torrent.name);
-            const savePath = './out'; // Fixed save path
-            const fileChoice = file.index; // Use file index for choice
-
             showMessage('<p>> INITIATING DOWNLOAD AND PREPARING STREAM...</p>');
-
             try {
-                const response = await fetch(`${baseURL}/download_file`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ magnet_link: magnetLink, file_choice: fileChoice, save_path: savePath })
-                });
-
+                const response = await fetch(`${baseURL}/download_file`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ magnet_link: magnetLink, file_choice: file.index, save_path: './out' }) });
                 if (!response.ok) throw new Error(`API Error: ${response.status}`);
                 const result = await response.json();
-
-                if (result.error) {
-                    showMessage(`<p>> ERROR: ${result.error}</p>`);
-                    return;
-                }
-
-                const streamFilePath = result.file_path;
-                const videoPlayerHtml = `
-                    <div class="details-view">
-                        <div class="details-info" style="flex: 1 1 100%;">
-                            <button class="back-button" onclick="showLastView()">< BACK TO RESULTS</button>
-                            <h2 class="details-title">${file.path.split('/').pop()}</h2>
-                            <video controls autoplay width="100%" style="max-height: 80vh; background-color: black;">
-                                <source src="${baseURL}/stream_file?file_path=${encodeURIComponent(streamFilePath)}" type="video/mp4">
-                                Your browser does not support the video tag.
-                            </video>
-                            <p style="margin-top: 1rem; font-family: var(--font-secondary);">Streaming from: ${streamFilePath}</p>
-                        </div>
-                    </div>
-                `;
-                detailsViewContainer.innerHTML = videoPlayerHtml;
+                if (result.error) { showMessage(`<p>> ERROR: ${result.error}</p>`); return; }
+                detailsViewContainer.innerHTML = `<div class="details-view"><div class="details-info" style="flex: 1 1 100%;"><button class="back-button" onclick="history.back()">< BACK</button><h2 class="details-title">${file.path.split('/').pop()}</h2><video controls autoplay width="100%" style="max-height: 80vh; background-color: black;"><source src="${baseURL}/stream_file?file_path=${encodeURIComponent(result.file_path)}" type="video/mp4">Your browser does not support the video tag.</video></div></div>`;
                 showDetailsView();
+            } catch (error) { console.error('Download and Stream Error:', error); showMessage('<p>> ERROR: FAILED TO START DOWNLOAD OR STREAM.</p>'); }
+        }
+        
+        // --- ROUTING ---
+        function navigateTo(path) {
+            history.pushState(null, '', path);
+            router();
+        }
+        
+        async function router() {
+            updateTimestamp();
+            const path = window.location.pathname;
+            const parts = path.split('/').filter(p => p);
 
-            } catch (error) {
-                console.error('Download and Stream Error:', error);
-                showMessage('<p>> ERROR: FAILED TO START DOWNLOAD OR STREAM.</p>');
+            if (path === '/' || path === '/app' || parts.length < 2) {
+                displayContent('TRENDING NOW', mockData);
+                searchInput.value = '';
+                return;
+            }
+            
+            const view = parts[1];
+            if (view === 'search' && parts.length > 2) {
+                const query = decodeURIComponent(parts[2]);
+                searchInput.value = query;
+                showGridView();
+                contentTitle.textContent = `SEARCH RESULTS FOR: "${query}"`;
+                resultsGrid.innerHTML = '<p class="message-area" style="display:block; grid-column: 1 / -1;">> EXECUTING SEARCH...</p>';
+                try {
+                    const response = await fetch(`${baseURL}/search?q=${query}`);
+                    const result = await response.json();
+                    if (result && result.data && Array.isArray(result.data.Search) && result.data.Search.length > 0) {
+                        const mappedResults = result.data.Search.map(item => ({ id: item.imdbID, title: item.Title, year: item.Year, type: item.Type, poster: item.Poster }));
+                        displayContent(`SEARCH RESULTS FOR: "${query}"`, mappedResults);
+                    } else { resultsGrid.innerHTML = '<p class="message-area" style="display:block; grid-column: 1 / -1;">> NO MATCHING CONTENT FOUND.</p>'; }
+                } catch (error) { console.error(error); resultsGrid.innerHTML = '<p class="message-area" style="display:block; grid-column: 1 / -1;">> ERROR: CONNECTION FAILED.</p>'; }
+            } else if (view === 'details' && parts.length > 2) {
+                const imdbID = parts[2];
+                showMessage('<p>> ACCESSING DATA NODE...</p>');
+                try {
+                    const response = await fetch(`${baseURL}/details?q=${imdbID}`);
+                    const result = await response.json();
+                    if (result.data) {
+                        displayDetailsView(result.data);
+                        const fileHash = parts[3] === 'files' && parts.length > 4 ? parts[4] : null;
+                        await fetchTorrents(result.data.Title, imdbID, fileHash);
+                    } else { throw new Error('Invalid data structure'); }
+                } catch (error) { console.error(error); showMessage('<p>> ERROR: COULD NOT RETRIEVE DETAILS.</p>'); }
+            } else {
+                 navigateTo('/app');
             }
         }
-
-        async function fetchAndDisplayTorrents(title) {
-            const container = document.getElementById('right-panel');
-            container.innerHTML = '<h3>STREAM SOURCES</h3><div class="spinner-container"><div class="spinner"></div></div>';
-            try {
-                const response = await fetch(`${baseURL}/get_torrents?q=${encodeURIComponent(title)}`);
-                if (!response.ok) throw new Error(`API Error: ${response.status}`);
-                const result = await response.json();
-                if (result.data && result.data.length > 0) { displayTorrents(result.data); } 
-                else { container.innerHTML = '<h3>STREAM SOURCES</h3><p class="message-area" style="display:block; text-align: left; padding: 1rem 0;">> No streamable sources found for this title.</p>'; }
-            } catch (error) { console.error('Fetch Torrents Error:', error); container.innerHTML = '<h3>STREAM SOURCES</h3><p class="message-area" style="display:block; text-align: left; padding: 1rem 0;">> Error: Failed to retrieve torrent data.</p>'; }
-        }
-
-        async function fetchAndShowDetails(imdbID) {
-            showMessage('<p>> ACCESSING DATA NODE...</p>');
-            updateTimestamp();
-            try {
-                const response = await fetch(`${baseURL}/details?q=${encodeURIComponent(imdbID)}`);
-                if (!response.ok) throw new Error(`API Error: ${response.status}`);
-                const result = await response.json();
-                if (result.data) displayDetails(result.data);
-                else throw new Error('Invalid data structure from API.');
-            } catch (error) { console.error('Fetch Details Error:', error); showMessage('<p>> ERROR: COULD NOT RETRIEVE DETAILS.</p>'); }
-        }
-
-        async function fetchSearchResults(query) {
-            lastContentTitle = `SEARCH RESULTS FOR: "${query}"`;
-            contentTitle.textContent = lastContentTitle;
-            showGridView();
-            resultsGrid.innerHTML = '<p class="message-area" style="display:block; grid-column: 1 / -1;">> EXECUTING SEARCH...</p>';
-            updateTimestamp();
-            try {
-                const response = await fetch(`${baseURL}/search?q=${encodeURIComponent(query)}`);
-                if (!response.ok) throw new Error(`Network Error: ${response.status}`);
-                const result = await response.json();
-                if (result && result.data && Array.isArray(result.data.Search) && result.data.Search.length > 0) {
-                    const mappedResults = result.data.Search.map(item => ({ id: item.imdbID, title: item.Title, year: item.Year, type: item.Type, poster: item.Poster }));
-                    displayContent(mappedResults);
-                } else { resultsGrid.innerHTML = '<p class="message-area" style="display:block; grid-column: 1 / -1;">> NO MATCHING CONTENT FOUND.</p>'; }
-            } catch (error) { console.error('API Fetch Error:', error); resultsGrid.innerHTML = '<p class="message-area" style="display:block; grid-column: 1 / -1;">> ERROR: CONNECTION FAILED.</p>'; }
-        }
-
-        function handleSearch() { const query = searchInput.value.trim(); if (query) { fetchSearchResults(query); } else { lastContentTitle = 'TRENDING NOW'; contentTitle.textContent = lastContentTitle; showGridView(); displayContent(mockData); } }
+        
+        function handleSearch() { const query = searchInput.value.trim(); if (query) navigateTo(`/app/search/${encodeURIComponent(query)}`); else navigateTo('/app'); }
         function updateTimestamp() { const now = new Date(), pad = (num) => String(num).padStart(2, '0'); document.getElementById('last-updated').textContent = `LAST UPDATE: ${now.getUTCFullYear()}/${pad(now.getUTCMonth() + 1)}/${pad(now.getUTCDate())} ${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())} UTC`; }
         
         searchInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') handleSearch(); });
-        window.addEventListener('load', () => { contentTitle.textContent = lastContentTitle; showGridView(); displayContent(mockData); updateTimestamp(); });
+        window.addEventListener('popstate', router);
+        window.addEventListener('load', () => {
+            if (window.location.pathname === '/') {
+                history.replaceState(null, '', '/app');
+            }
+            router();
+        });
     </script>
-
 </body>
 </html>
