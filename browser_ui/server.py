@@ -1,6 +1,7 @@
 import mimetypes
 import sys
 import os
+import asyncio
 
 from engine import TorrentEngine
 from downloader import TorrentDownloader
@@ -29,9 +30,9 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 
-def fetch_torrent_metadata(ml: str):
-    torrent_engine.add_magnet(ml)
-    return torrent_engine.fetch_metadata()
+async def fetch_torrent_metadata(ml: str):
+    await asyncio.to_thread(torrent_engine.add_magnet, ml)
+    return await asyncio.to_thread(torrent_engine.fetch_metadata)
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
@@ -54,17 +55,17 @@ async def find_torrent(q: str):
 
 @app.get("/get_torrent_metadata")
 async def find_torrent_metadata(q: str):
-    data = fetch_torrent_metadata(q)
+    data = await fetch_torrent_metadata(q)
     return { "data": data }
 
 @app.post("/download_file")
 async def download_file(magnet_link: str = Body(...), file_choice: Union[int, str] = Body(...), save_path: str = Body(...)):
-    metadata = fetch_torrent_metadata(magnet_link)
+    metadata = await fetch_torrent_metadata(magnet_link)
     if not metadata:
         return {"error": "Could not fetch torrent metadata."}
 
     try:
-        abs_path, file_index, file_size = torrent_downloader.download_file(
+        abs_path, file_index, file_size = await asyncio.to_thread(torrent_downloader.download_file,
             metadata, file_choice, save_path
         )
         return {"message": "Download started", "file_path": abs_path, "file_index": file_index, "file_size": file_size}
